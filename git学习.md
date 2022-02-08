@@ -12,7 +12,7 @@ ssh-keygen -t rsa -C "你的邮箱地址"
 
 生成结果
 
-![image-20220207191156486](./img/image-20220207191156486.png)
+<img src=".\img\image-20220207191156486.png" align=center/>
 
 配置windows凭据
 
