@@ -16,7 +16,7 @@ ssh-keygen -t rsa -C "你的邮箱地址"
 
 配置windows凭据
 
-![image-20220207191409206](D:\document\notebook\image-20220207191409206.png)
+<img src=".\img\image-20220207191409206.png" align=center/>
 
 ## 2.注册github账号并添加ssh公钥
 
@@ -24,11 +24,11 @@ ssh-keygen -t rsa -C "你的邮箱地址"
 
 添加ssh公钥
 
-![image-20220207191528903](D:\document\notebook\image-20220207191528903.png)
+<img src=".\img\image-20220207191528903.png" align=center/>
 
 创建一个新的仓库
 
-![image-20220207191603386](D:\document\notebook\image-20220207191603386.png)
+<img src=".\img\image-20220207191603386.png" align=center/>
 
 创建之后有如下提示
 
@@ -54,7 +54,9 @@ git remote add origin git@github.com:shenjipo/testwang.git  //设置远程仓库
 git push -u origin master   //提交到远程仓库
 ```
 
-![image-20220207192129401](D:\document\notebook\image-20220207192129401.png)
+<img src=".\img\image-20220207192129401.png" align=center/>
+
+
 
 ## 4.更新文件内容并同步到远程仓库
 
@@ -72,13 +74,15 @@ git push origin master:master //git push <远程主机名> <本地分支名>:<�
 
 1.git初始化仓库
 
+<img src=".\img\image-20220207200928833.png" align=center/>
+
 ![image-20220207200928833](D:\document\notebook\image-20220207200928833.png)
 
 2.上传到远程仓库
 
-![image-20220207201217334](D:\document\notebook\image-20220207201217334.png)
+<img src=".\img\image-20220207201217334.png" align=center/>
 
-![image-20220207201459483](D:\document\notebook\image-20220207201459483.png)
+<img src=".\img\image-20220207201459483.png" align=center/>
 
 3.冲突的处理
 
@@ -104,19 +108,19 @@ let f = 8
 
 3.3合并解决冲突
 
-![image-20220207202043998](D:\document\notebook\image-20220207202043998.png)
+<img src=".\img\image-20220207202043998.png" align=center/>
 
 显示冲突的文件，双击进行人工解决冲突
 
-![image-20220207202122624](D:\document\notebook\image-20220207202122624.png)
+<img src=".\img\image-20220207202122624.png" align=center/>
 
-![image-20220207202130708](D:\document\notebook\image-20220207202130708.png)
+<img src=".\img\image-20220207202130708.png" align=center/>
 
 3.4解决完成 提交到远程仓库
 
 解决之后查看Log，可以明显看到解决冲突
 
-![image-20220207202254222](D:\document\notebook\image-20220207202254222.png)
+<img src=".\img\image-20220207202254222.png" align=center/>
 
 ## 6.总结
 
