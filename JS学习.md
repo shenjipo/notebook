@@ -1,0 +1,1416 @@
+# JS学习
+
+## 1.js的数据类型和强制类型转换
+
+### js的基本数据类型有7种
+
+* string
+* boolean
+* number
+* symbol
+* null
+* undefined
+* 对象
+
+前面六种是基本类型，最后一个是对象类型，注意
+
+1. `string` 、`number` 、`boolean` 和 `null` `undefined` 这五种类型统称为**原始类型**（Primitive），表示不能再细分下去的基本类型;
+
+2. `symbol`是ES6中新增的数据类型，`symbol` 表示独一无二的值，通过 `Symbol` 函数调用生成，由于生成的 symbol 值为原始类型，所以 `Symbol` 函数不能使用` new` 调用；
+3. `null` 和 `undefined` 通常被认为是特殊值，这两种类型的值唯一，就是其本身。
+
+### number类型转换规则	
+
+> - `null` 转换为 0
+> - `undefined` 转换为 `NaN`
+> - `true` 转换为 1，`false` 转换为 0
+> - 字符串转换时遵循数字常量规则，转换失败返回` NaN`
+
+什么时候转换为`number`类型
+
+* 有加法运算符，但是无`String`类型的时候，都会优先转换为`Number`类型
+
+* 除了加法运算符，其他运算符都会把运算自动转成数值
+
+```javascript
+true + 0 // 1
+true + true // 2
+true + false //1
+//一元运算符（注意点）
++'abc' // NaN
+-'abc' // NaN
++true // 1
+-false // 0
+```
+
+### string类型转换规则
+
+> - `null` 转换为 `'null'`
+> - `undefined` 转换为 `'undefined'`
+> - `true` 转换为 `'true'`，`false` 转换为 `'false'`
+> - 数字转换遵循通用规则，极大极小的数字使用指数形式
+
+什么时候转换为`string`类型
+
+* 在没有对象的前提下
+
+  字符串的自动转换，主要发生在字符串的**加法运算**时。当一个值为字符串，另一个值为非字符串，则后者转为字符串。
+
+* 当有对象且与对象`+`时候
+
+```javascript
+'2' + 1 // '21'
+'2' + true // "2true"
+'2' + false // "2false"
+'2' + undefined // "2undefined"
+'2' + null // "2null"
+
+//toString的对象
+var obj2 = {
+    toString:function(){
+        return 'a'
+    }
+}
+console.log('2'+obj2)
+//输出结果2a
+
+//常规对象
+var obj1 = {
+   a:1,
+   b:2
+}
+console.log('2'+obj1)；
+//输出结果 2[object Object]
+
+//几种特殊对象
+'2' + {} // "2[object Object]"
+'2' + [] // "2"
+'2' + function (){} // "2function (){}"
+'2' + ['koala',1] // 2koala,1
+```
+
+### boolean类型转换规则
+
+> 除了下述 6 个值转换结果为 `false`，其他全部为` true`：
+>
+> 1. undefined
+> 2. null
+> 3. -0
+> 4. 0或+0
+> 5. NaN
+> 6. ''（空字符串）
+
+什么时候进行`boolean`类型转换
+
+- 布尔比较时
+- `if(obj)` , `while(obj) `等判断时或者 三元运算符只能够包含布尔值
+
+```javascript
+if ( !undefined
+  && !null
+  && !0
+  && !NaN
+  && !''
+) {
+  console.log('true');
+} // true
+
+//下面两种情况也会转成布尔类型
+expression ? true : false
+!! expression
+```
+
+### 类型转换练习
+
+```javascript
+//类型转换相关问题
+var bar=true;
+console.log(bar+0);
+console.log(bar+"xyz");
+console.log(bar+true);
+console.log(bar+false);
+console.log('1'>bar);
+console.log(1+'2'+false);
+console.log('2' + ['koala',1]);
+
+var obj1 = {
+   a:1,
+   b:2
+}
+console.log('2'+obj1)；
+
+var obj2 = {
+    toString:function(){
+        return 'a'
+    }
+}
+console.log('2'+obj2)
+
+//输出结果  1 truexyz 2 1 false 12false 2koala,1 2[object Object] 2a
+
+//作用域和NaN 这里不具体讲作用域，意在说明NaN
+var b=1;
+function outer(){
+    var b=2;
+    function inner(){
+        b++;
+        console.log(b);
+        var b=3;
+    }
+    inner();
+}
+outer();
+//输出结果 NaN
+```
+
+### 如何判断数据类型
+
+三种方式，分别为 `typeof`、`instanceof` 和` Object.prototype.toString()`
+
+```javascript
+typeof 'seymoe'    // 'string'
+typeof true        // 'boolean'
+typeof 10          // 'number'
+typeof Symbol()    // 'symbol'
+typeof null        // 'object' 无法判定是否为 null
+typeof undefined   // 'undefined'
+
+typeof {}           // 'object'
+typeof []           // 'object'
+typeof(() => {})    // 'function'
+```
+
+1. `null` 的判定有误差，得到的结果
+
+如果使用 `typeof`，`null`得到的结果是`object`
+
+2. 操作符对对象类型及其子类型，例如函数（可调用对象）、数组（有序索引对象）等进行判定，则除了函数都会得到 `object` 的结果。
+
+综上可以看出`typeOf`对于判断类型还有一些不足，在对象的子类型和`null`情况下。
+
+参考资料：https://juejin.cn/post/6844903870712283149
+
+## 2.js有几种类型的值？他们在内存使用上有什么区别
+
+js有两种类型的值，一种是基本数据类型，另一种是引用类型（Object类）
+
+* 声明变量时的区别
+
+> 1.原始值存直接放在栈中
+>
+> 2.类的内容存放在堆中，引用(地址)存在栈中
+>
+> 原始数据类型直接存储在栈（stack）中的简单数据段，占据空间小、大小固定，属于被频繁使用数据，所以放入栈中存储。
+>
+> 引用数据类型存储在堆（heap）中的对象，占据空间大、大小不固定。如果存储在栈中，将会影响程序运行的性能；引用数据类型在
+> 栈中存储了指针，该指针指向堆中该实体的起始地址。当解释器寻找引用值时，会首先检索其在栈中的地址，取得地址后从堆中获得实
+> 体。
+
+* 访问的区别
+
+> 1.在javascript中是不允许直接访问保存在堆内存中的对象的，所以在访问一个对象时，首先得到的是这个对象在堆内存中的地址，然后再按照这个地址去获得这个对象中的值，这就是传说中的按引用访问。
+>
+> 2.而原始类型的值则是可以直接访问到的。　
+
+* 复制变量时的区别
+
+> 1）原始值：深拷贝
+> 2）引用值：浅拷贝，仅仅复制了指针，并未复制堆中的内容
+
+* 参数传递的区别
+
+```javascript
+let a = 1
+
+function add(a) {
+    a = a + 1
+}
+
+add(a)
+console.log(a)// a = 1
+
+let b = {
+    value: 1
+}
+
+function bdd(b) {
+    b.value = b.value + 1
+}
+
+bdd(b)
+console.log(b) // b.value = 2
+//如果参数是基本值类型，进行值传递，之后两个变量互不影响，如果参数是类，那么传递的引用，在函数内部的操作会影响到外边的类
+```
+
+## 3.什么是堆？什么是栈？它们之间有什么区别和联系？
+
+> * 在数据结构中
+>
+> 栈中数据的存取方式为先进后出。而堆是一个优先队列，是按优先级来进行排序的，优先级可以按照大小来规定。完全
+> 二叉树是堆的一种实现方式。
+>
+> * 在操作系统中
+>
+> 堆（heap）：用于动态分配内存，由程序员申请分配和释放。堆是从低地址位向高地址位增长，采用链式存储结构。频繁的malloc/free造成内存空间的不连续，会产生碎片。（**经常问如何解决内存碎片？**）当申请堆空间时库函数是按照一定的算法搜索可用的足够大的空间，因此堆的效率比栈要低的多。注：与数据结构中的堆不是一个概念，但堆的分配方式类似于链表。
+>
+> 栈(stack)： 由编译器自动释放，存放函数的参数值、局部变量等。每当一个函数被调用时，该函数的返回类型和一些调用的信息被存放到栈中，这个被调用的函数再为它的自动变量和临时变量在栈上分配空间。每调用一个函数一个新的栈就会被使用。栈区是从高地址位向低地址位增长的，是一块连续的内存区域，最大容量是由系统预先定义好的，申请的栈空间超过这个界限时会提示溢出。
+
+## 4.内部属性 [[Class]] 是什么？
+
+```javascript
+//所有 typeof 返回值为 "object" 的对象（如数组）都包含一个内部属性 [[Class]]（我们可以把它看作一个内部的分类，而非
+//传统的面向对象意义上的类）。这个属性无法直接访问，一般通过 Object.prototype.toString(..) 来查看。例如：
+Object.prototype.toString.call( [1,2,3] );
+// "[object Array]"
+Object.prototype.toString.call( /regex-literal/i );
+// "[object RegExp]"
+// 我们自己创建的类就不会有这份特殊待遇，因为 toString() 找不到 toStringTag 属性时只好返回默认的 Object 标签
+// 默认情况类的[[Class]]返回[object Object]
+class Class1 {}
+Object.prototype.toString.call(new Class1()); // "[object Object]"
+// 需要定制[[Class]]
+class Class2 {
+  get [Symbol.toStringTag]() {
+    return "Class2";
+  }
+}
+Object.prototype.toString.call(new Class2()); // "[object Class2]"
+```
+
+## 5.介绍 js 有哪些内置对象？
+
+注意：全局的对象（ global objects ）或称标准内置对象，不要和 "全局对象（global object）" 混淆。这里说的全局的对象是说在
+全局作用域里的对象。全局作用域中的其他对象可以由用户的脚本创建或由宿主程序提供。
+
+> 值属性：`Infinity` `NaN` `undefined` `globalThis`
+>
+> 函数属性：`eval()` `parseInt(0)` 等
+>
+> ...共14类
+
+参考：https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects
+
+## 6.undefined 与 undeclared 的区别？
+
+> - 已在作用域中声明但还没有赋值的变量，是 undefined 的。相反，还没有在作用域中声明过的变量，是 undeclared 的。
+> - 对于 undeclared 变量的引用，浏览器会报引用错误，如 ReferenceError: b is not defined 。
+> - 并且typeof 对 undefined 和 undeclared 变量返回的都是undefined。其实“ undefined” 和“ is not defined ”是两码事。
+
+## 7.null 和 undefined 的区别？
+
+> 如果一个值被声明却未赋值，那么就是undefined
+>
+> 对未定义的变量执行typeof操作符也会返回undefined
+>
+> 一个函数如果没有使用return语句指定返回值，就会返回一个undefined值
+>
+> 调用函数时没有传参数值，参数同样也会被初始化为undefined值
+>
+> 
+>
+> 从逻辑角度来看，null值表示一个空对象指针，指示变量未指向任何对象。把 null 作为尚未创建的对象，
+>
+> 一般变量声明了但还没有赋值的时候会返回 undefined，null主要用于赋值给一些可能会返回对象的变量，作为初始化。
+>
+> `undefined `不是保留字因此可以设置一个变量叫做undefined，null是保留字
+
+```javascript
+null == undefined    // true
+null === undefined   // false   数据类型不同
+//由于undefined可能会被重写（不是保留字）因此推荐使用如下判断方式，来判断是否是undefined
+if(b === void 0){
+    //
+}
+```
+
+## 8.如何获取安全的 undefined 值？
+
+如上
+
+## 9.js代码基本规范
+
+>在平常项目开发中，我们遵守一些这样的基本规范，比如说：
+>
+>（1）一个函数作用域中所有的变量声明应该尽量提到函数首部，用一个 var 声明，不允许出现两个连续的 var 声明，声明时
+>    如果变量没有值，应该给该变量赋值对应类型的初始值，便于他人阅读代码时，能够一目了然的知道变量对应的类型值。
+>
+>（2）代码中出现地址、时间等字符串时需要使用常量代替。
+>
+>（3）在进行比较的时候吧，尽量使用'===', '!=='代替'==', '!='。
+>
+>（4）不要在内置对象的原型上添加方法，如 Array, Date。
+>
+>（5）switch 语句必须带有 default 分支。
+>
+>（6）for 循环必须使用大括号。
+>
+>（7）if 语句必须使用大括号。
+
+## 10.JavaScript 原型，原型链？ 有什么特点？
+
+- prototype: 显式原型
+- __ proto__: 隐式原型
+
+>所有的**函数**都有**显式原型**，显式原型是一个**对象**
+>
+>所有的**对象**都有**隐式原型**，指向其**构造函数的显式原型**
+>
+>注意Function的原型链`__proto__`指向本身构造函数，如下图所示
+>
+>调用一个对象（函数）的属性或者方法时，如果本身没有，那么必然沿着它的`__proto__`去找，
+>
+>prototype原型对象，本质上也是个对象，也有自己的`__proto__`原型链
+>
+>函数和对象的原型链区别
+>
+>有如下的函数定义和对象,，他们的原型链如图所示
+>
+>```javascript
+>var F = function() {};
+>var foo = {},
+>let f = F()
+>//小f的__proto__指向F的构造函数即prototype
+>```
+>
+>![image.png](JS学习/img/2e19aa0deec545f69bc9fcab6e82e601tplv-k3u1fbpfcp-watermark.awebp)
+
+![image.png](JS学习/img/03fb60345d3f46a5a38094f988e72974tplv-k3u1fbpfcp-watermark.awebp)
+
+相关习题
+
+第一题
+
+```javascript
+var F = function() {};
+
+Object.prototype.a = function() {
+  console.log('a');
+};
+
+Function.prototype.b = function() {
+  console.log('b');
+}
+
+var f = new F();
+
+f.a();
+f.b();
+
+F.a();
+F.b();
+```
+
+第二题
+
+```javascript
+var A = function() {};
+A.prototype.n = 1;
+var b = new A();
+A.prototype = {
+  n: 2,
+  m: 3
+}
+var c = new A();
+
+console.log(b.n);
+console.log(b.m);
+
+console.log(c.n);
+console.log(c.m);
+```
+
+第三题
+
+```javascript
+var foo = {},
+    F = function(){};
+Object.prototype.a = 'value a';
+Function.prototype.b = 'value b';
+
+console.log(foo.a);
+console.log(foo.b);
+
+console.log(F.a);
+console.log(F.b);
+```
+
+第四题
+
+```javascript
+function A() {}
+function B(a) {
+    this.a = a;
+}
+function C(a) {
+    if (a) {
+        this.a = a;
+    }
+}
+A.prototype.a = 1;
+B.prototype.a = 1;
+C.prototype.a = 1;
+
+console.log(new A().a); 
+console.log(new B().a);
+console.log(new C(2).a);
+```
+
+第五题
+
+```javascript
+console.log(123['toString'].length + 123)
+```
+
+参考链接https://juejin.cn/post/7008526225207640078 https://juejin.cn/post/7007416743215759373
+
+## 11. js 获取原型的方法？
+
+```javascript
+function R(){
+}
+var one=new R();
+console.log(Object.getPrototypeOf(one));	//官方推荐，规范写法
+console.log(one.__proto__);						//不报错，不推荐
+console.log(one.constructor.__proto__)	//同上
+```
+
+## 12.在 js 中不同进制数字的表示方式
+
+- 以 0X、0x 开头的表示为十六进制。
+- 以 0、0O、0o 开头的表示为八进制。
+- 以 0B、0b 开头的表示为二进制格式。
+
+## 13. js 中整数的安全范围是多少？
+
+```javascript
+安全整数指的是，在这个范围内的整数转化为二进制存储的时候不会出现精度丢失，能够被“安全”呈现的最大整数是 2^53 - 1，
+即9007199254740991，在 ES6 中被定义为 Number.MAX_SAFE_INTEGER。最小整数是-9007199254740991，在 ES6 中
+被定义为 Number.MIN_SAFE_INTEGER。
+```
+
+```javascript
+console.log(Number.MAX_SAFE_INTEGER)
+//9007199254740991
+```
+
+## 14.typeof NaN 的结果是什么？
+
+```javascript
+NaN 意指“不是一个数字”（not a number），NaN 是一个“警戒值”（sentinel value，有特殊用途的常规值），用于指出
+数字类型中的错误情况，即“执行数学运算没有成功，这是失败后返回的结果”。
+
+typeof NaN; // "number"
+console.log(NaN === NaN) //false
+NaN 是一个特殊值，它和自身不相等，是唯一一个非自反（自反，reflexive，即 x === x 不成立）的值。而 NaN != NaN
+为 true。
+```
+
+## 15.isNaN 和 Number.isNaN 函数的区别？
+
+> 函数 isNaN 接收参数后，会尝试将这个参数转换为数值，**任何不能被转换为数值的的值都会返回 true**，因此非数字值传入也会
+> 返回 true ，会影响 NaN 的判断。
+>
+> 函数 Number.isNaN 会首先判断传入参数是否为数字，如果是数字再继续判断是否为 NaN ，这种方法对于 NaN 的判断更为
+> 准确。
+>
+> `Number.isNaN`更好
+
+```javascript
+console.log(isNaN(NaN))     //true
+console.log(isNaN('12A'))   //true
+console.log(isNaN('12'))    //false
+console.log(Number.isNaN(NaN))   //true
+console.log(Number.isNaN('12'))  //false
+console.log(Number.isNaN('12a')) //false
+```
+
+## 16.Array 构造函数只有一个参数值时的表现？
+
+> Array 构造函数只带一个数字参数的时候，该参数会被作为数组的预设长度（length），而非只充当数组中的一个元素。这样
+> 创建出来的只是一个空数组，只不过它的 length 属性被设置成了指定的值。
+>
+> 构造函数 Array(..) 不要求必须带 new 关键字。不带时，它会被自动补上。
+
+```javascript
+// literal constructor
+[element0, element1, /* ... ,*/ elementN]
+
+// construct from elements
+new Array(element0, element1, /* ... ,*/ elementN)
+
+// construct from array length
+new Array(arrayLength)
+let a = new Array(5)
+a[0] = 5
+a[0] = 6
+console.log(a)//[ 6, <4 empty items> ]
+```
+
+## 17.其他值到字符串的转换规则？
+
+```javascript
+console.log('' + true)
+console.log('' + false)
+console.log('' + 123)
+console.log('' + undefined)
+console.log('' + null)
+console.log('' + NaN)
+
+console.log(''+99999999999999999999999999999999999999999999999999999999999999999999999999999999999)//1e+83
+
+//对普通对象来说，除非自行定义 toString() 方法，否则会调用 toString()（Object.prototype.toString()）
+//来返回内部属性 [[Class]] 的值，如"[object Object]"。如果对象有自己的 toString() 方法，字符串化时就会调用该方法并使用其返回值。
+console.log('' + {a: {b: 1}}) //[object Object]
+let a = {
+    toString() {
+        return '666'
+    }
+}
+console.log('' + a)//666
+```
+
+## 18.其他值到数字值的转换规则？
+
+> （1）Undefined 类型的值转换为 NaN。
+>
+> （2）Null 类型的值转换为 0。
+>
+> （3）Boolean 类型的值，true 转换为 1，false 转换为 0。
+>
+> （4）String 类型的值转换如同使用 Number() 函数进行转换，如果包含非数字值则转换为 NaN，空字符串为 0。
+>
+> （5）Symbol 类型的值不能转换为数字，会报错。
+>
+> （6）对象（包括数组）会首先被转换为相应的基本类型值，如果返回的是非数字的基本类型值，则再遵循以上规则将其强制转换为数字。
+>
+> 为了将值转换为相应的基本类型值，抽象操作 ToPrimitive 会首先（通过内部操作 DefaultValue）检查该值是否有valueOf() 方法。如果有并且返回基本类型值，就使用该值进行强制类型转换。如果没有就使用 toString() 的返回值（如果存在）来进行强制类型转换。
+>
+> 如果 valueOf() 和 toString() 均不返回基本类型值，会产生 TypeError 错误
+
+```javascript
+console.log(1+undefined)//NaN
+console.log(1+NaN) //NaN
+console.log(1+null) //1
+console.log(1+true) //2
+console.log(1+false) //1
+```
+
+## 19.其他值到布尔类型的值的转换规则？
+
+> 以下这些是假值：
+>
+> * undefined
+> *  null
+> * false
+> * +0、-0 和 NaN
+>
+> * ""(空串)
+>
+> * void 0
+
+## 20. {} 和 [] 的 valueOf 和 toString 的结果是什么？
+
+> MDN
+>
+> 默认情况下，`toString()` 方法被每个 `Object` 对象继承。如果此方法在自定义对象中未被覆盖，`toString()` 返回 "[object *type*]"，其中 `type` 是对象的类型
+>
+> `valueOf()`返回指定对象的原始值。
+>
+> ![image-20220214162147356](JS学习/img/image-20220214162147356.png)
+
+```javascript
+let a = {
+    v: 1
+}
+console.log(a.valueOf()) // { v: 1 }
+console.log(a.toString()) //[object Object]
+let b = []
+console.log(b.valueOf()) //[]
+console.log(b.toString()) // 空字符串
+```
+
+## 21.什么是假值对象？
+
+> 浏览器在某些特定情况下，在常规 JavaScript 语法基础上自己创建了一些外来值，这些就是“假值对象”。假值对象看起来和
+> 普通对象并无二致（都有属性，等等），但将它们强制类型转换为布尔值时结果为 false 最常见的例子是 document.all，它
+> 是一个类数组对象，包含了页面上的所有元素，由 DOM（而不是 JavaScript 引擎）提供给 JavaScript 程序使用。
+
+```javascript
+let a = {}
+undefined
+Boolean(a) //true
+Boolean(document.getElementById('all'))//false
+```
+
+## 22.`~` 操作符的作用？
+
+> 这是js中的一元操作符：`按位取反`。
+> `~` 返回 2 的补码，并且 ~ 会将数字转换为 32 位整数，因此我们可以使用 `~ `来进行取整操作。
+>
+> `~x` 大致等同于 -(x+1)。
+
+## 23.解析字符串中的数字和将字符串强制类型转换为数字的返回结果都是数字，它们之间的区别是什么？
+
+```
+解析允许字符串（如 parseInt() ）中含有非数字字符，解析按从左到右的顺序，如果遇到非数字字符就停止。而转换（如 Nu
+mber ()）不允许出现非数字字符，否则会失败并返回 NaN。
+```
+
+## 24.`+` 操作符什么时候用于字符串的拼接？
+
+```
+如果 + 的其中一个操作数是字符串（或者通过以上步骤最终得到字符串），则执行字符串拼接，否则执行数字加法。
+
+那么对于除了加法的运算符来说，只要其中一方是数字，那么另一方就会被转为数字。
+```
+
+## 25.什么情况下会发生布尔值的隐式强制类型转换？
+
+> （1） if (..) 语句中的条件判断表达式。
+> （2） for ( .. ; .. ; .. ) 语句中的条件判断表达式（第二个）。
+> （3） while (..) 和 do..while(..) 循环中的条件判断表达式。
+> （4） ? : 中的条件判断表达式。
+> （5） 逻辑运算符 ||（逻辑或）和 &&（逻辑与）左边的操作数（作为条件判断表达式）。
+
+## 26.|| 和 && 操作符的返回值？
+
+> 对于`||` `&&`操作符，他们首先对两侧的表达式进行布尔值的强制类型转换，然后根据true或者false返回未强制转换时的结果
+>
+> 对于`A||B`操作符，如果A正确就返回A，否则返回B，通常这么用 `let a = getValue() || 'test';`getvalue失败时给a一个初始值
+>
+> 对于`%%`操作符，如果AB都正确就返回B，否则返回A
+
+## 27.Symbol 值的强制类型转换？
+
+> ES6 允许从Symbol到字符串的显式强制类型转换，然而隐式强制类型转换会产生错误。
+>
+> Symbol 值不能够被强制类型转换为数字（显式和隐式都会产生错误），但可以被强制类型转换为布尔值（显式和隐式结果
+> 都是 true ）。
+
+## 28.`==` `>` `<`操作符的强制类型转换规则？
+
+`NaN`**和任何值比较都为false，包括自己** 唯一能判断NaN的方法是通过isNaN()函数
+
+### `>` `<`的比较规则
+
+```javascript
+//2)数字字符串比较，会将其先转成数字
+console.log('1' < '3') //true
+//3)纯字符串比较,先转成ascii码
+alert("a"<"b");//true
+alert("abc"<"aad");//false,多纯字母比较，会依次比较ascii码
+//4)汉字比较
+alert("我".charCodeAt());//25105
+alert("的".charCodeAt());//30340
+alert("我"<"的");//true,汉字比较,转成ascii码
+//5)当数字和字符串比较，且字符串为数字。则将数字字符串转为数字
+alert(123<"124");//true,下面一句代码得出124的ascii码为49，所以并不是转成ascii比较
+alert("124".charCodeAt());//49
+//6)当数字和字符串比较,且字符串为非纯数字时,则将非数字字符串转成数字的时候会转换为NaN,当NaN和数字比较时不论大小都返回false(NaN “Not a Number”。出现这个数值比较少见，以至于我们可以不理它。当运算无法返回正确的数值时，就会返回“NaN”值。NaN 值非常特殊，因为它“不是数字”，所以任何数跟它都不相等，甚至 NaN 本身也不等于 NaN 。 )
+alert(13>"abc");//false
+```
+
+### `=`的比较规则
+
+> null与undefined是相等的；javaScript的设计者希望用null表示一个空的值，而undefined表示值未定义。事实证明，这并没有什么卵用，区分两者的意义不大。大多数情况下，我们都应该用null。undefined仅仅在判断函数参数是否传递的情况下有用
+>
+> 在全等和不全等的判断上，只有值和类型都相等，才返回true，否则返回false；
+>
+> 注意浮点数的相等比较：浮点数在运算过程中会产生误差；所以：1 / 3 === (1 - 2 / 3); // false。要比较两个浮点数是否相等，只能计算它们之差的绝对值，看是否小于某个阈值：Math.abs(1 / 3 - (1 - 2 / 3)) < 0.0000001; // true
+
+```javascript
+var num =2==2;  //true
+var num = '2'==2; //true,'2'会转成数值2
+var num = false == 0; //true,false转成数值就是0
+var num = false == "0"; //true,false转成数值就是0,"0"会转化成0
+var num = 'a'=='A';  //false,转换后的编码不一样
+var num = 2==NaN; //false,只要有NaN，都是false
+var num = {}=={}; //false,比较的是他们的地址，每个新创建对象的引用地址都不同
+
+var age = {};
+var height = age;
+var box = age == height;//true,引用地址一样，所以相等
+```
+
+### `==`与`===`的区别
+
+```javascript
+var strA = "i love you!";
+var strB = new String("i love you!");
+```
+
+这两个变量含有相同的字符序列，但数据类型却不同，前者为string，后者为object，在使用”==”操作符时，JavaScript会尝试各种求值，以检测两者是否会在某种情况下相等。所以下面的表达式结果为true： strA == strB。
+
+第二种操作符是”严格”的”===”，它在求值时不会这么宽容，不会进行类型转换。所以表达式strA === strB的值为false，虽然两个变量持有的值相同
+
+参考 https://www.jeffjade.com/2015/08/28/2015-09-02-js-string-compare/
+
+## 29.如何将字符串转化为数字，例如 '12.3b'?
+
+> （1）使用 Number() 方法，前提是所包含的字符串不包含不合法字符。
+>
+> （2）使用 parseInt() 方法，parseInt() 函数可解析一个字符串，并返回一个整数。还可以设置要解析的数字的基数。当基数的值为 0，或没有设置该参数时，parseInt() 会根据 string 来判断数字的基数。
+>
+> （3）使用 parseFloat() 方法，该函数解析一个字符串参数并返回一个浮点数。
+>
+> （4）使用 `-` 操作符的隐式转换。 
+
+```javascript
+console.log('12.3b' - 0) //NaN
+console.log('12.3' - 0)  //12.3
+```
+
+## 30.如何将浮点数点左边的数每三位添加一个逗号，如 `12000000.11` 转化为`12,000,000.11`?
+
+```javascript
+// 方法一
+function format(number) {
+    // ?=这表示一个环视的语法，表示该位置后面的字符指定规则
+  return number && number.toString().replace(/(\d)(?=(\d{3})+\.)/g, function($1, $2) {
+        return $2 + ',';
+       })
+}
+// 方法二
+function format1(number) {
+  return Intl.NumberFormat().format(number)
+}
+// 方法三
+function format2(number) {
+  return number.toLocaleString('en')   // 换成当地的字符串格式
+}
+```
+
+## 31.常用正则表达式
+
+参考
+
+http://caibaojian.com/form-regexp.html
+
+https://www.jianshu.com/p/1cb5229325a7
+
+## 32.生成随机数的各种方法？
+
+```javascript
+Math.random()   生成0-1（包括0不包括1的随机数）
+```
+
+## 33.如何实现数组的随机排序？
+
+
+
+## 34.javascript 创建对象的几种方式？
+
+### js的普通函数和构造函数的区别
+
+首先来看下什么时普通函数什么时构造函数
+
+```javascript
+//普通函数
+function person(name){
+	var obj = new Object();
+	obj.name = name;
+	return obj;//使用return
+}
+var p = person('john');
+//构造函数
+function Person(name){
+	this.name = name;
+}
+var p = new Person('John');//使用new关键字，不使用return
+```
+
+具体区别如下
+
+> ##### 1、调用方式不一样
+>
+> 构造函数通常使用new关键字，普通函数不需要
+>
+> ##### 2、作用也不一样（构造函数用来新建实例对象）
+>
+> 构造函数通常用来创建对象，普通函数用来描述行为
+>
+> ##### 3、首字母大小写习惯
+>
+> - 一般构造函数的函数名称会用大写
+> - 普通函数用小写
+>
+> ##### 4、函数中this的指向不同
+>
+> - 普通函数中的this，在严格模式下指向undefined，非严格模式下指向window对象。
+> - 构造函数的this则是指向它创建的对象实例。
+
+```javascript
+'use strict'
+function perseon() {
+    console.log(this)
+}
+perseon()  //输出Undefined
+/*******************************************/
+function perseon() {
+    console.log(this)
+}
+
+perseon()//输出windows对象
+```
+
+### 几种创建对象的方法
+
+```javascript
+//1.工厂模式
+//优点：初步解决了创建多个相似对象时，代码的复用问题
+//缺点：使用工厂模式创建的对象，没有解决对象识别的问题
+function Person(name, age) {
+    return {
+        name: name,
+        age: age
+    }
+}
+var person1 = Person('kobe', 43);
+console.log(person1 instanceof Person)//false
+
+//2.构造函数模式
+//优点：解决了工厂模式中对象类型无法识别的问题
+//缺点：我们知道 ECMAScript 中的函数是对象，在使用构造函数创建对象时，每个方法都会在实例对象中重新创建一遍。拿上面的例子举例，这意味着每创建一个对象，我们就会创建一个 sayName 函数的实例，但它们其实做的都是同样的工作，因此这样便会造成内存的浪费。
+function createPerson(name, age, job){
+    this.name = name;
+    this.age = age;
+    this.job = job;
+    this.sayName = function(){
+        alert(this.name);
+    };
+
+}
+var person1 = new createPerson("james",9,"student");
+console.log(person1 instanceof createPerson)//true
+console.log(person1.sayName === person2.sayName)//false
+
+//3.原型模式
+//优点：解决了构造函数模式中多次创建相同函数对象的问题，所有的实例可以共享同一组属性和函数。
+//缺点：因为所有的实例都是共享一组属性，对于包含基本值的属性来说没有问题，但是对于包含引用类型的值来说（例如数组对象），所有的实例都是对同一个引用类型进行操作，那么属性的操作就不是独立的，最后导致读写的混乱。我们创建的实例一般都是要有属于自己的全部属性的，因此单独使用原型模式的情况是很少存在的。
+function Person(){
+
+}
+Person.prototype.name = "james";
+Person.prototype.age = 9;
+Person.prototype.job = "student";
+Person.prototype.sayName = function(){
+    alert(this.name);
+}
+var person1 = new Person();
+person1.sayName(); // "james"
+var person2 = new Person();
+person2.sayName(); // "james"
+console.log(person1.sayName === person2.sayName) // true
+
+//4.组合使用构造函数模式和原型模式
+//优点：使用这种模式的好处就是，每个实例都会拥有自己的一份实例属性的副本，但同时又共享着对方法的引用，最大限度地节省了内存。而且这中混成模式还支持向构造函数传递参数，可以说是及两种模式之长。是目前使用最广泛，认同度最高的一种创建自定类型的方法。
+//缺点：由于使用了两种模式，因此对于代码的封装性来说不是很好。
+function Person(name, age, job){
+    this.name = name;
+    this.age = age;
+    this.job = job;
+}
+Person.prototype = {
+    sayName: function(){
+        alert(this.name);
+    }
+}
+var person1 = new createPerson("james"，9，"student");
+var person2 = new createPerson("kobe"，9，"student");
+console.log(person1.name); // "james"
+console.log(person2.name); // "kobe"
+console.log(person1.sayName === person2.sayName); // true
+
+//5.动态原型模式
+//优点：解决了混成模式中封装性的问题
+//缺点：无
+function Person(name, age, job){
+    this.name = name;
+    this.age = age;
+    this.job = job;
+	//只在第一次调用的时候创建一次
+    if(typeof this.sayName !== "function" ){
+        Person.prototype.sayName: function(){
+            alert(this.name);
+        } 
+    } 
+}
+var person1 = new createPerson("james"，9，"student");
+var person2 = new Person("bob", 9, "student");
+person1.sayName(); // "james"
+console.log(person1.sayName === person2.sayName) //true
+
+//6.稳妥构造函数模式（很少用）
+//稳妥对象最适合在一些安全的环境中（这些环境中会禁止使用this和new），或者防止数据被其他应用程序改动时使用。
+//特点如下 一是新创建对象的实例方法不引用this 二是不使用new操作符调用构造函数
+function Persion(name, age, job) {
+  // 创建要返回的对象
+  var o = new Object();
+  // 添加方法
+  o.sayName = function() {
+    alert(name);
+  }
+  return o;
+}
+//在以这种模式创建的对象中，除了调用sayName()外，没有别的方式可以访问其他数据成员
+var p1 = Persion('bill', 23, 'FE');
+p1.sayName() // bill;
+```
+
+## 35.JavaScript 继承的几种实现方式？
+
+```javascript
+//1.原型链继承
+//优点：能实现功能
+//缺点：多个实例对引用类型的操作会被篡改。
+function SuperType(){
+  this.colors = ["red", "blue", "green"];
+}
+function SubType(){}
+//此处实现继承
+SubType.prototype = new SuperType();
+var instance1 = new SubType();
+instance1.colors.push("black");
+alert(instance1.colors); //"red,blue,green,black"
+var instance2 = new SubType(); 
+alert(instance2.colors); //"red,blue,green,black"
+
+//2.借用构造函数
+//优点：无
+//缺点：只能继承父类的实例属性和方法，不能继承原型属性/方法
+//无法实现复用，每个子类都有父类实例函数的副本，影响性能
+function  SuperType(){
+    this.color=["red","green","blue"];
+}
+function  SubType(){
+    //继承自SuperType
+    SuperType.call(this);
+}
+var instance1 = new SubType();
+instance1.color.push("black");
+alert(instance1.color);//"red,green,blue,black"
+var instance2 = new SubType();
+alert(instance2.color);//"red,green,blue"
+
+//3.组合继承
+//优点：
+//缺点：实例对象instance1上的两个属性就屏蔽了其原型对象SubType.prototype的两个同名属性。所以，组合模式的缺点就是在使用子类创建实例对象时，其原型中会存在两份相同的属性/方法。
+function SuperType(name){
+  this.name = name;
+  this.colors = ["red", "blue", "green"];
+}
+SuperType.prototype.sayName = function(){
+  alert(this.name);
+};
+function SubType(name, age){
+  // 继承属性
+  SuperType.call(this, name);
+  this.age = age;
+}
+// 继承方法  构建原型链
+SubType.prototype = new SuperType(); 
+SubType.prototype.sayAge = function(){
+    alert(this.age);
+};
+var instance1 = new SubType("Nicholas", 29);
+
+var instance2 = new SubType("Greg", 27);
+
+console.log(instance1.sayAge === instance2.sayAge) //true
+console.log(instance1.sayName === instance2.sayName) //true
+console.log(instance1.colors === instance2.colors)  //false
+
+//4.原型式继承（利用object浅复制）
+//优点：基本不适用
+//缺点：原型链继承多个实例的引用类型属性指向相同，存在篡改的可能。无法传递参数
+var person = {
+  name: "Nicholas",
+  friends: ["Shelby", "Court", "Van"]
+};
+var anotherPerson = object(person);
+anotherPerson.name = "Greg";
+anotherPerson.friends.push("Rob");
+
+var yetAnotherPerson = object(person);
+yetAnotherPerson.name = "Linda";
+yetAnotherPerson.friends.push("Barbie");
+
+alert(person.friends);   //"Shelby,Court,Van,Rob,Barbie"
+console.log(anotherPerson)
+/*{
+  name: 'Linda',
+  friends: [ 'Shelby', 'Court', 'Van', 'Rob', 'Barbie' ]
+}*/
+
+//5.寄生式继承-在原型式继承的基础上，增强对象，返回构造函数
+//优点
+//缺点：原型链继承多个实例的引用类型属性指向相同，存在篡改的可能。无法传递参数（同上）
+function createAnother(original){
+  var clone = object(original); // 通过调用 object() 函数创建一个新对象
+  clone.sayHi = function(){  // 以某种方式来增强对象
+    alert("hi");
+  };
+  return clone; // 返回这个对象
+}
+var person = {
+  name: "Nicholas",
+  friends: ["Shelby", "Court", "Van"]
+};
+var anotherPerson = createAnother(person);
+var anotherPerson = createAnother(person);
+var anotherPerson2 = createAnother(person);
+console.log(anotherPerson.sayHi === anotherPerson2.sayHi)//true
+
+//6.寄生组合式继承-结合借用构造函数传递参数和寄生模式实现继承 这是最成熟的方法，也是现在库实现的方法，ES6的extend核心就是此种方法
+//优点：这个例子的高效率体现在它只调用了一次SuperType 构造函数，并且因此避免了在SubType.prototype 上创建不必要的、多余的属性。于此同时，原型链还能保持不变；因此，还能够正常使用instanceof 和isPrototypeOf()
+function inheritPrototype(subType, superType){
+  var prototype = Object.create(superType.prototype); // 创建对象，创建父类原型的一个副本
+  prototype.constructor = subType;                    // 增强对象，弥补因重写原型而失去的默认的constructor 属性
+  subType.prototype = prototype;                      // 指定对象，将新创建的对象赋值给子类的原型
+}
+
+// 父类初始化实例属性和原型属性
+function SuperType(name){
+  this.name = name;
+  this.colors = ["red", "blue", "green"];
+}
+SuperType.prototype.sayName = function(){
+  alert(this.name);
+};
+
+// 借用构造函数传递增强子类实例属性（支持传参和避免篡改）
+function SubType(name, age){
+  SuperType.call(this, name);
+  this.age = age;
+}
+
+// 将父类原型指向子类
+inheritPrototype(SubType, SuperType);
+
+// 新增子类原型属性
+SubType.prototype.sayAge = function(){
+  alert(this.age);
+}
+
+var instance1 = new SubType("xyc", 23);
+var instance2 = new SubType("lxy", 23);
+
+instance1.colors.push("2"); // ["red", "blue", "green", "2"]
+instance1.colors.push("3"); // ["red", "blue", "green", "3"]
+
+//7.混入方式继承多个对象
+function MyClass() {
+     SuperClass.call(this);
+     OtherSuperClass.call(this);
+}
+
+// 继承一个类
+MyClass.prototype = Object.create(SuperClass.prototype);
+// 混合其它
+Object.assign(MyClass.prototype, OtherSuperClass.prototype);
+// 重新指定constructor
+MyClass.prototype.constructor = MyClass;
+
+MyClass.prototype.myMethod = function() {
+     // do something
+};
+```
+
+参考https://juejin.cn/post/6844903696111763470
+
+## 36.寄生式组合继承的实现？
+
+见35
+
+## 37.Javascript 的作用域链？
+
+### 什么是作用域
+
+简单来说，**作用域** 指程序中定义变量的区域，它决定了当前执行代码对变量的访问权限。
+
+js原生环境仅支持全局作用域和函数作用域
+
+```javascript
+/* 全局作用域开始 */
+var a = 1;
+function func () { /* func 函数作用域开始 */
+  var a = 2;
+  console.log(a);
+}                  /* func 函数作用域结束 */
+func(); // => 2
+console.log(a); // => 1
+/* 全局作用域结束 */
+```
+
+### 什么是作用域链
+
+```javascript
+function foo(a) {
+  var b = a * 2;
+
+  function bar(c) {
+    console.log( a, b, c );
+  }
+
+  bar(b * 3);
+}
+
+foo(2); // 2 4 12
+```
+
+> 当可执行代码内部访问变量时，会先查找本地作用域，如果找到目标变量即返回，否则会去父级作用域继续查找...一直找到全局作用域。我们把这种作用域的嵌套机制，称为 作用域链。上述代码一共有三层作用域嵌套，分别是：
+>
+> 1. `全局`作用域
+> 2. `foo` 作用域
+> 3. `bar` 作用域
+
+### 什么是词法（静态）作用域？
+
+> 词法作用域，就意味着函数被定义的时候，它的作用域就已经确定了，和拿到哪里执行没有关系，因此词法作用域也被称为 “静态作用域”。
+
+```javascript
+var value = 1;
+
+function foo() {
+  console.log(value);
+}
+
+function bar() {
+  var value = 2;
+  foo();
+}
+
+bar();
+// 结果是 1
+```
+
+### 什么是块级作用域？
+
+> `ES6` 标准提出了使用 `let` 和 `const` 代替 `var` 关键字，来“创建块级作用域”。也就是说，上述代码改成如下方式，块级作用域是有效的：
+
+```javascript
+//块级作用域
+if (true) {
+  let a = 1;
+}
+console.log(a); // ReferenceError
+//非块级作用域
+if (true) {
+  var a = 1;
+}
+console.log(a); // 结果???
+```
+
+### 作用域的应用场景
+
+* 模块化
+
+### 什么是闭包？闭包有什么用
+
+```javascript
+function foo() {
+  var a = 2;
+
+  function bar() {
+    console.log( a );
+  }
+
+  return bar;
+}
+
+var baz = foo();
+
+baz(); // 这就形成了一个闭包
+```
+
+> 能够访问其他函数内部变量的函数，被称为 **闭包**。上面的baz就是一个闭包，它能够访问到foo函数内部的变量a
+>
+> 闭包的执行看起来像是开发者使用的一个小小的 “作弊手段” ——**绕过了作用域的监管机制，从外部也能获取到内部作用域的信息**。闭包的这一特性极大地丰富了开发人员的编码方式，也提供了很多有效的运用场景。
+
+**闭包的两个经典应用**
+
+1. 单例模式
+
+```javascript
+// 单例模式
+function Singleton(){
+  this.data = 'singleton';
+}
+
+Singleton.getInstance = (function () {
+  var instance;
+    
+  return function(){
+    if (instance) {
+      return instance;
+    } else {
+      instance = new Singleton();
+      return instance;
+    }
+  }
+})();
+
+var sa = Singleton.getInstance();
+var sb = Singleton.getInstance();
+console.log(sa === sb); // true
+console.log(sa.data); // 'singleton'
+```
+
+2. 私有变量
+
+```javascript
+// 模拟私有属性
+function getGeneratorFunc () {
+  var _name = 'John';
+  var _age = 22;
+    
+  return function () {
+    return {
+      getName: function () {return _name;},
+      getAge: function() {return _age;}
+    };
+  };
+}
+
+var obj = getGeneratorFunc()();
+obj.getName(); // John
+obj.getAge(); // 22
+obj._age; // undefined
+```
+
+3. 柯里化
+
+> 柯里化（`currying`），是把接受多个参数的函数变换成接受一个单一参数（最初函数的第一个参数）的函数，
+>
+> 通俗来说，就是根据接受的参数生成对应的一个函数
+>
+> 如下面例子所示，通过向 `typeOf` 里传入不同的类型字符串参数，就可以生成对应的类型判断函数，作为语法糖在业务代码里重复使用
+
+```javascript
+function typeOf (value) {
+    return function (obj) {
+        const toString = Object.prototype.toString;
+        const map = {
+            '[object Boolean]'	 : 'boolean',
+            '[object Number]' 	 : 'number',
+            '[object String]' 	 : 'string',
+            '[object Function]'  : 'function',
+            '[object Array]'     : 'array',
+            '[object Date]'      : 'date',
+            '[object RegExp]'    : 'regExp',
+            '[object Undefined]' : 'undefined',
+            '[object Null]'      : 'null',
+            '[object Object]' 	 : 'object'
+        };
+        return map[toString.call(obj)] === value;
+    }
+}
+
+var isNumber = typeOf('number');
+var isFunction = typeOf('function');
+var isRegExp = typeOf('regExp');
+
+isNumber(0); // => true
+isFunction(function () {}); // true
+isRegExp({}); // => false
+```
+
+**闭包的问题**
+
+* 内存泄漏
+
+我们知道，`javascript` 内部的垃圾回收机制用的是引用计数收集：即当内存中的一个变量被引用一次，计数就加一。垃圾回收机制会以固定的时间轮询这些变量，将计数为 `0` 的变量标记为失效变量并将之清除从而释放内存。
+
+```javascript
+function foo() {
+  var a = 2;
+  function bar() {
+    console.log( a );
+  }
+  return bar;
+}
+var baz = foo();
+baz(); // 这就形成了一个闭包
+```
+
+上述代码中，理论上来说， `foo` 函数作用域隔绝了外部环境，所有变量引用都在函数内部完成，`foo` 运行完成以后，内部的变量就应该被销毁，内存被回收。然而闭包导致了全局作用域始终存在一个 `baz` 的变量在引用着 `foo` 内部的 `bar` 函数，这就意味着 `foo` 内部定义的 `bar` 函数引用数始终为 `1`，垃圾运行机制就无法把它销毁。更糟糕的是，`bar` 有可能还要使用到父作用域 `foo` 中的变量信息，那它们自然也不能被销毁... JS 引擎无法判断你什么时候还会调用闭包函数，只能一直让这些数据占用着内存。
+
+> 这种由于闭包使用过度而导致的内存占用无法释放的情况，我们称之为：内存泄露。
+
+参考https://juejin.cn/post/6844904165672484871
+
+## 38.this对象的理解
+
+> 几种特殊情况
+>
+> * 回调函数的this指向window，但如果回调函数是箭头函数，那么this指向了上一级
+> * call(null) apply(null)强制把this指向window，否则就指向第一个参数对应的对象
+
+```javascript
+var number = 5;
+var obj = {
+    number: 3,
+    fn1: (function () {
+        var number;
+        this.number *= 2;
+        number = number * 2;
+        number = 3;
+        return function () {
+            var num = this.number;
+            this.number *= 2;
+            console.log(num);
+            number *= 3;
+            console.log(number);
+        }
+    })()
+}
+var fn1 = obj.fn1;//此时fn1函数已经被执行一次了，fn1立即执行，其实是个回调函数，this指向了window
+//隐式调用
+function sayHi(){
+    console.log('Hello,', this.name);
+}
+var person = {
+    name: 'YvetteLau',
+    sayHi: sayHi
+}
+var name = 'Wiliam';
+person.sayHi();
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## 143.let,const,var区别
+
+> let与const都是块级作用域，不存在变量提升，但是const不允许修改指针，声明的时候必须有初始值，var会提升变量作用域，
+
+```javascript
+// var的作用域提升
+function add() {
+    console.log(b)
+    var b = 1
+}
+add()
+//const
+const a = {
+    value: 1
+}
+//可以修改值
+a.value = 2
+//报错，不能修改指针
+a = {}
+```
+
