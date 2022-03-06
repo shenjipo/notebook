@@ -1124,49 +1124,29 @@ MyClass.prototype.myMethod = function() {
 
 ## 37.Javascript 的作用域链？
 
-### 什么是作用域
+### 什么是作用域？什么是作用域链？
 
-简单来说，**作用域** 指程序中定义变量的区域，它决定了当前执行代码对变量的访问权限。
+简单来说，**作用域** 指程序中定义变量的区域，它决定了当前执行代码对变量的访问权限。js原生环境仅支持全局作用域和函数作用域
 
-js原生环境仅支持全局作用域和函数作用域
+**作用域链**就是当年所需要的的变量在当前作用域中找不到时，它会一层层向上查找，直到全局作用域停止，这种查找的关系就叫作用域链
 
 ```javascript
 /* 全局作用域开始 */
 var a = 1;
 function func () { /* func 函数作用域开始 */
-  var a = 2;
-  console.log(a);
+
+  console.log(a); //函数func的作用域中不存在a，那么就到上一层去找，这就是作用域链
 }                  /* func 函数作用域结束 */
-func(); // => 2
+func(); // => 1
 console.log(a); // => 1
 /* 全局作用域结束 */
 ```
 
-### 什么是作用域链
-
-```javascript
-function foo(a) {
-  var b = a * 2;
-
-  function bar(c) {
-    console.log( a, b, c );
-  }
-
-  bar(b * 3);
-}
-
-foo(2); // 2 4 12
-```
-
-> 当可执行代码内部访问变量时，会先查找本地作用域，如果找到目标变量即返回，否则会去父级作用域继续查找...一直找到全局作用域。我们把这种作用域的嵌套机制，称为 作用域链。上述代码一共有三层作用域嵌套，分别是：
->
-> 1. `全局`作用域
-> 2. `foo` 作用域
-> 3. `bar` 作用域
-
 ### 什么是词法（静态）作用域？
 
 > 词法作用域，就意味着函数被定义的时候，它的作用域就已经确定了，和拿到哪里执行没有关系，因此词法作用域也被称为 “静态作用域”。
+>
+> foo()函数内部的变量value由定义函数的位置决定，而不是运行时决定，因此value的上一级作用域就是全局作用域而不是bar函数作用域
 
 ```javascript
 var value = 1;
@@ -1205,137 +1185,24 @@ console.log(a); // 结果???
 
 * 模块化
 
-### 什么是闭包？闭包有什么用
-
 ```javascript
-function foo() {
-  var a = 2;
-
-  function bar() {
-    console.log( a );
-  }
-
-  return bar;
-}
-
-var baz = foo();
-
-baz(); // 这就形成了一个闭包
-```
-
-> 能够访问其他函数内部变量的函数，被称为 **闭包**。上面的baz就是一个闭包，它能够访问到foo函数内部的变量a
->
-> 闭包的执行看起来像是开发者使用的一个小小的 “作弊手段” ——**绕过了作用域的监管机制，从外部也能获取到内部作用域的信息**。闭包的这一特性极大地丰富了开发人员的编码方式，也提供了很多有效的运用场景。
-
-**闭包的两个经典应用**
-
-1. 单例模式
-
-```javascript
-// 单例模式
-function Singleton(){
-  this.data = 'singleton';
-}
-
-Singleton.getInstance = (function () {
-  var instance;
-    
-  return function(){
-    if (instance) {
-      return instance;
-    } else {
-      instance = new Singleton();
-      return instance;
-    }
-  }
-})();
-
-var sa = Singleton.getInstance();
-var sb = Singleton.getInstance();
-console.log(sa === sb); // true
-console.log(sa.data); // 'singleton'
-```
-
-2. 私有变量
-
-```javascript
-// 模拟私有属性
-function getGeneratorFunc () {
-  var _name = 'John';
-  var _age = 22;
-    
-  return function () {
-    return {
-      getName: function () {return _name;},
-      getAge: function() {return _age;}
-    };
-  };
-}
-
-var obj = getGeneratorFunc()();
-obj.getName(); // John
-obj.getAge(); // 22
-obj._age; // undefined
-```
-
-3. 柯里化
-
-> 柯里化（`currying`），是把接受多个参数的函数变换成接受一个单一参数（最初函数的第一个参数）的函数，
->
-> 通俗来说，就是根据接受的参数生成对应的一个函数
->
-> 如下面例子所示，通过向 `typeOf` 里传入不同的类型字符串参数，就可以生成对应的类型判断函数，作为语法糖在业务代码里重复使用
-
-```javascript
-function typeOf (value) {
-    return function (obj) {
-        const toString = Object.prototype.toString;
-        const map = {
-            '[object Boolean]'	 : 'boolean',
-            '[object Number]' 	 : 'number',
-            '[object String]' 	 : 'string',
-            '[object Function]'  : 'function',
-            '[object Array]'     : 'array',
-            '[object Date]'      : 'date',
-            '[object RegExp]'    : 'regExp',
-            '[object Undefined]' : 'undefined',
-            '[object Null]'      : 'null',
-            '[object Object]' 	 : 'object'
-        };
-        return map[toString.call(obj)] === value;
+// 一个作用域的面试题
+let x = 5;
+function fn(x) {
+    return function(y) {
+        console.log(y + (++x));
     }
 }
-
-var isNumber = typeOf('number');
-var isFunction = typeOf('function');
-var isRegExp = typeOf('regExp');
-
-isNumber(0); // => true
-isFunction(function () {}); // true
-isRegExp({}); // => false
+let f = fn(6);
+f(7);   //14
+console.log(x); //5
 ```
 
-**闭包的问题**
+### 谈一谈js的模块化
 
-* 内存泄漏
+> 
 
-我们知道，`javascript` 内部的垃圾回收机制用的是引用计数收集：即当内存中的一个变量被引用一次，计数就加一。垃圾回收机制会以固定的时间轮询这些变量，将计数为 `0` 的变量标记为失效变量并将之清除从而释放内存。
 
-```javascript
-function foo() {
-  var a = 2;
-  function bar() {
-    console.log( a );
-  }
-  return bar;
-}
-var baz = foo();
-baz(); // 这就形成了一个闭包
-```
-
-上述代码中，理论上来说， `foo` 函数作用域隔绝了外部环境，所有变量引用都在函数内部完成，`foo` 运行完成以后，内部的变量就应该被销毁，内存被回收。然而闭包导致了全局作用域始终存在一个 `baz` 的变量在引用着 `foo` 内部的 `bar` 函数，这就意味着 `foo` 内部定义的 `bar` 函数引用数始终为 `1`，垃圾运行机制就无法把它销毁。更糟糕的是，`bar` 有可能还要使用到父作用域 `foo` 中的变量信息，那它们自然也不能被销毁... JS 引擎无法判断你什么时候还会调用闭包函数，只能一直让这些数据占用着内存。
-
-> 这种由于闭包使用过度而导致的内存占用无法释放的情况，我们称之为：内存泄露。
 
 参考https://juejin.cn/post/6844904165672484871
 
@@ -1377,6 +1244,275 @@ var name = 'Wiliam';
 person.sayHi();
 ```
 
+## 39.eval函数
+
+>  它的功能是把对应的字符串解析成 JS 代码并运行。
+>
+> 应该避免使用 eval，不安全，非常耗性能（2次，一次解析成 js 语句，一次执行）。
+
+```javascript
+eval('2+2') //4
+eval(new String('2+2')) //String {'2+2'} 如果eval函数输入的不是字符串则直接返回原对象
+'2+2' === new String('2+2') //false
+'2+2' == new String('2+2') //true
+```
+
+参考 https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/eval
+
+## 40.DOM与BOM对象
+
+> DOM全称为document object model，文档对象模型，针对网页内的HTML元素提供的一个API，可以通过dom对象来操作网页内的HTML元素
+>
+> BOM全程Broswer object model，即浏览器对象模型，针对浏览器本身的属性和行为提供各种API，window是它的一个最重要的对象，可以通过window对象获取浏览器的页面大小，控制浏览器的行为（跳转，后退，关闭等）
+
+## 41.JS事件是什么，浏览器的事件机制有什么区别，如何组织冒泡
+
+以一个例子来说明浏览器的两种事件监听机制
+
+```html
+<div id="outer">
+    <p id="inner">Click me!</p>
+</div>
+```
+
+如果点击了div元素的子元素p，而且两个元素都各自有一个click监听函数，那么哪一个监听函数被先触发？
+
+微软提出了`事件冒泡` 机制，网景提出了`事件捕获`机制
+
+事件冒泡机制使得事件从内层向外层传播，因此上面的例子在事件冒泡机制下click函数执行顺序如下
+
+p-div-body-html
+
+事件捕获机制相反，使得事件从外层向内层传播，上述例子click函数执行顺序如下
+
+html-body-div-p
+
+```javascript
+//事件注册函数有三个参数
+//event DOM事件 例如'click'
+// function 回调函数
+// useCapture true事件在捕获阶段执行 false事件在冒泡阶段执行(默认false)
+addEventListener(event, function, useCapture);
+```
+
+**用法-事件代理(委派)**
+
+假设有如下的页面
+
+```html
+<ul class="color_list">        
+    <li>red</li>        
+    <li>orange</li>        
+    <li>yellow</li>        
+    <li>green</li>        
+    <li>blue</li>        
+    <li>purple</li>    
+</ul>
+<div class="box"></div>
+```
+
+需要在点击每个li标签时输出点击的li标签颜色，常规做法时遍历每个li标签给他们注册点击事件，但是如果有上万个li标签，会导致性能降低，此时可以利用事件流的特性来处理
+
+```javascript
+//直接注册父标签的点击事件由于事件冒泡机制，点击了 li 后会冒泡到 ul ，此时就会触发绑定在 ul 上的点击事件，再利用 target 找到事件实际发生的元素，就可以达到预期的效果。
+function colorChange(e){                
+    var e=e||window.event;//兼容性的处理         
+    if(e.target.nodeName.toLowerCase()==="li"){                    
+        box.innerHTML="该颜色为 "+e.target.innerHTML;                
+    }                            
+}            
+color_list.addEventListener("click",colorChange,false)
+```
+
+如何阻止事件冒泡？
+
+```javascript
+//1. 给子级加 event.stopPropagation( )
+$("#div1").mousedown(function(e){
+    var e=event||window.event;
+    event.stopPropagation();
+});
+//2.在事件处理函数中返回 false
+$("#div1").mousedown(function(event){
+    var e=e||window.event;
+    return false;
+});
+//区别：return false 不仅阻止了事件往上冒泡，而且阻止了事件本身(默认事件)。event.stopPropagation()则只阻止事件往上冒泡，不阻止事件本身。
+```
+
+下面的代码如果点击了p元素之后，执行结果如何？
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+<div>
+    <p id="parEle">我是父元素 <span id="sonEle">我是子元素</span></p>
+</div>
+</body>
+</html>
+
+<script type="text/javascript">
+    // 父级 捕获 - 子级捕获(子级捕获代码在前) - 子级冒泡 - 父级 捕获
+    var sonEle = document.getElementById('sonEle');
+    var parEle = document.getElementById('parEle');
+
+    parEle.addEventListener('click', function () {
+        alert('父级 冒泡');
+    }, false);
+    parEle.addEventListener('click', function () {
+        alert('父级 捕获');
+    }, true);
+
+    sonEle.addEventListener('click', function () {
+        alert('子级捕获');
+    }, true);
+    sonEle.addEventListener('click', function () {
+        alert('子级冒泡');
+    }, false);
+
+</script>
+```
+
+> 总结事件流如图所示(最底层div元素的监听函数执行顺序根据代码先后顺序确定)
+
+![img](E:\work\notebook\52c95304faa114bfedc5665d612a4cc9~tplv-t2oaga2asx-watermark.awebp)
+
+## 42.["1", "2", "3"].map(parseInt) 答案是多少？
+
+map函数会有三个参数，value,index,array，parseInt函数接收两个参数所以相当于执行三次
+
+```javascript
+parseInt('1',0)
+parseInt('2',1)
+parseInt('3',2)
+// parseInt第一个参数表示接受到的值，第二个参数表示第一个数字是按照几进制表示的(2-36进制)，由于不存在1进制，而二进制下不存在3所以输出
+// [1,NaN,NaN]
+```
+
+## 43.什么是闭包，闭包的用处？
+
+> 闭包是一个对象的引用，但是该引用指向的是一个外部函数的内部对象
+>
+> 什么是闭包：
+>
+>    - 闭包是一个存在内部函数的引用关系
+>    - 该引用指向的是外部函数的局部变量对象(前提是内部函数使用了外部函数的局部变量)
+>
+> 闭包的作用：
+>    - 延长外部函数变量对象的生命周期
+>    - 使用闭包能够间接的从函数外部访问函数内部的私有变量
+
+## 44.js中的`use strict`
+
+> use strict 是一种 ECMAscript5 添加的（严格）运行模式，这种模式使得 Javascript 在更严格的条件下运行。
+>
+> 设立"严格模式"的目的，主要有以下几个：
+>
+> - 消除 Javascript 语法的一些不合理、不严谨之处，减少一些怪异行为;
+> - 消除代码运行的一些不安全之处，保证代码运行的安全；
+> - 提高编译器效率，增加运行速度；
+> - 为未来新版本的 Javascript 做好铺垫。
+
+具体来说有以下改变
+
+> - 1.声明定义变量必须用var
+> - 2.禁止自定义的函数中的this关键字指向全局对象
+> - 创建eval作用域, 更安全
+
+## 45.关于原型对象和原型链
+
+原型和原型链出现是为了什么？实现函数或者对象的复用，俗称继承，比如使得每个数字都有toString()方法
+
+> js中我们创建的所有对象函数都有一个`__proto__`属性，该属性指向了该对象的原型对象，例如有一个对象student，他有两个属性name和age，那么可以通过a.name或者a.age访问或者改变这个属性，那么如果有很多个student对象，而且它们都有一个共同的属性{school:'希望小学'}该如何实现？如下所示
+>
+> ```javascript
+> Object.prototype.school = '希望小学'
+> let studentA = {name:'wang',age:30}
+> let studentB = {name:'Li',age:30}
+> console.log(studentA.school) //希望小学
+> console.log(studentB.school) //希望小学
+> console.log(studentB.school === studentA.school) //true
+> ```
+>
+> 也就是说如果我们访问了对象的某个属性，在该对象上没找到，那么就会顺着它的`__proto__`原型链去找它的原型对象，如果找到就停止，否则顺着原型对象的原型链继续找，直到找到`Object.prototype.__proto__`停止，`Object.prototype.__proto__`指向了`null`
+>
+> js中存在三种种原型链，对象原型链、函数原型链(本质也是对象，但是比普通的对象多了一个中间对象Function)和自定义原型链，所有对象的原型链最终一定指向了`Object.prototype`，`Object.prototype`的`__proto__`指向了null
+>
+> 对于`对象原型链`(按照以下两种方式创建的对象)，它们的`__proto__`直接指向了`Object.prototype`
+>
+> ```javascript
+> // 第一种：字面量创建对象
+> const person1 = {name: '林三心', age: 10}
+> // 第二种：new Object创建对象
+> const person2 = new Object()
+> person3.name = '林三心'
+> person3.age = 10
+> console.log(person1.__proto__ === Object.prototype)//true
+> console.log(person2.__proto__ === Object.prototype)//true
+> 
+> // 第三种：Object.create创建对象
+> const person4 = Object.create({})
+> person4.name = '林三心'
+> person4.age = 10
+> 
+> console.log(person3.__proto__ === Object.prototype)//false
+> ```
+>
+> 对于`函数原型链`，该函数的自身的`__proto__`指向了`Function.prototype`，而`Function.prototype.__proto__`又指向了`Object.prototype`，该函数实例的`__proto__`指向了`F.prototype`。
+>
+> 其实`Function`是由`Object`派生的一个对象，然后`F`又是由`Function`派生的对象，`f`又是由`F`派生的对象
+>
+> ```javascript
+> var F = function() {};
+> //等价于 var F = new Function()
+> var f = new F();
+> console.log(F.__proto__ === Function.prototype)
+> console.log(Function.prototype.__proto__ === Object.prototype)
+> console.log(f.__proto__ === F.prototype)
+> console.log(F.prototype.__proto__ === Object.prototype)
+> ```
+>
+> 对于`自定义原型链`（按照以下的方式创建）,可以自定义原型链指向哪个对象
+>
+> ```javascript
+> //Object.create(proto[, propertiesObject])
+> //proto必填参数，是新对象的原型对象，如下面代码里新对象me的__proto__指向person。注意，如果这个参数是null，那新对象就彻彻底底是个空对象，没有继承
+> //Object.prototype上的任何属性和方法，如hasOwnProperty()、toString()等。
+> const person = {
+>   isHuman: false,
+>   printIntroduction: function () {
+>     console.log(`My name is ${this.name}. Am I human? ${this.isHuman}`);
+>   }
+> };
+> const me = Object.create(person); // me.__proto__ === person
+> me.name = "Matthew"; // name属性被设置在新对象me上，而不是现有对象person上
+> me.isHuman = true; // 继承的属性可以被重写
+> me.printIntroduction(); // My name is Matthew. Am I human? true
+> console.log(me.__proto__ === person) // true
+> console.log(person.__proto__ === Object.prototype) // true
+> ```
+
+使用`instanceof`来判断某个对象的`prototype`原型是否在另一个对象的原型链上
+
+```javascript
+A instanceof B //判断B的prototype是否在A的原型链上(可以跨对象判断)
+function Person(name) { // 构造函数
+  this.name = name
+}
+
+const person = new Person('林三心') // 实例
+
+console.log(Person instanceof Function) // true
+console.log(Person instanceof Object) // true
+console.log(person instanceof Person) // true
+console.log(person instanceof Object) // true
+console.log(person instanceof Function) //false
+```
 
 
 
@@ -1386,8 +1522,7 @@ person.sayHi();
 
 
 
-
-
+## 写一个JS通用的事件监听函数
 
 
 
