@@ -960,7 +960,7 @@ p1.sayName() // bill;
 ## 35.JavaScript 继承的几种实现方式？
 
 ```javascript
-//1.原型链继承
+//1.原型链继承  一般来说，每个对象都有一个原型链和原型对象，如果自己本身没有某个属性或者方法时，就回到他的原型对象上去找，因此我们可以直接把该对象的原型对象设置成为互父类的实例对象，从而实现继承
 //优点：能实现功能
 //缺点：多个实例对引用类型的操作会被篡改。
 function SuperType(){
@@ -975,7 +975,7 @@ alert(instance1.colors); //"red,blue,green,black"
 var instance2 = new SubType(); 
 alert(instance2.colors); //"red,blue,green,black"
 
-//2.借用构造函数
+//2.借用构造函数 根据原型链继承的实现方法，我们发现所有子类的实例对象的原型对象都指向了同一个父类的实例对象，因此只需要为每一个原型对象生成对应的父类对象就可以了
 //优点：无
 //缺点：只能继承父类的实例属性和方法，不能继承原型属性/方法
 //无法实现复用，每个子类都有父类实例函数的副本，影响性能
@@ -983,7 +983,7 @@ function  SuperType(){
     this.color=["red","green","blue"];
 }
 function  SubType(){
-    //继承自SuperType
+    //继承自SuperType 让SuperType中的this指向自己
     SuperType.call(this);
 }
 var instance1 = new SubType();
@@ -1198,9 +1198,7 @@ f(7);   //14
 console.log(x); //5
 ```
 
-### 谈一谈js的模块化
 
-> 
 
 
 
@@ -1208,12 +1206,29 @@ console.log(x); //5
 
 ## 38.this对象的理解
 
-> 几种特殊情况
+> 关于this指向的几条纲领
 >
-> * 回调函数的this指向window，但如果回调函数是箭头函数，那么this指向了上一级
+> * 函数执行时，首先看该函数前面有没有`.`，如果有那么this就指向该对象，否则指向window
+>
+>  ```javascript
+> //通过 函数名() 这种方法调用函数其实是一种语法糖,call()函数的第一个参数表示this的指向对象，剩下的参数全部传给函数本身
+> function say(word) {  
+>    console.log(world);  
+> }  
+> say("Hello world");  //相当于 say.call(window, "Hello world");  
+> function say(content) {  
+>        console.log("From " + this + ": Hello "+ content);  
+>    }  
+> //相当于 say.call("Bob", "World"); From Bob: Hello World 
+>  ```
+>
+> * 自执行函数，回调函数（非箭头函数）的this指向window，
+>
 > * call(null) apply(null)强制把this指向window，否则就指向第一个参数对应的对象
+> * 构造函数模式中（new Function），类中（函数体中）this.xxx = xxx，this就是当前类的实例
 
 ```javascript
+//例子1：关于立即执行函数this指向，call（）函数this指向，对象调用时的this指向 
 var number = 5;
 var obj = {
     number: 3,
@@ -1232,16 +1247,104 @@ var obj = {
     })()
 }
 var fn1 = obj.fn1;//此时fn1函数已经被执行一次了，fn1立即执行，其实是个回调函数，this指向了window
-//隐式调用
-function sayHi(){
-    console.log('Hello,', this.name);
+fn1.call(null);//this仍然指向window
+obj.fn1();//this指向了obj
+console.log(window.number);
+//例子2：普通函数和箭头函数this指向,一般来说如果某个方法需要通过 对象. 的形式调用，则使用普通函数
+var age = 10
+let myobj = {
+    age: 20,
+    sayAge: () => {
+        console.log(this.age)
+    }
 }
-var person = {
-    name: 'YvetteLau',
-    sayHi: sayHi
+let myobj2 = {
+    age: 30,
+    sayAge: function () {
+        console.log(this.age)
+    }
 }
-var name = 'Wiliam';
-person.sayHi();
+myobj.sayAge()//10
+myobj2.sayAge()//30
+//例子3：箭头函数的this指向它的上一级this而不是同级this
+var age = 10
+let myobj = {
+    age: 20,
+    sayAge: function () {
+        let a = ()=>{
+            console.log(this.age)
+        }
+        a()
+    }
+}
+myobj.sayAge()//10
+//例子4：回调函数和箭头函数的this指向
+var Bob1={
+    sname:"鲍勃",
+    friends:["Jack","Rose","Tom","Jerry"],
+    intr(){
+        this.friends.forEach(function(ele){
+            console.log(this.sname+"认识"+ele);
+        });
+    }
+}
+Bob1.intr();//undefined认识Jack undefined认识Rose undefined认识Tom undefined认识Jerry
+var Bob2 = {
+    sname: "鲍勃",
+    friends: ["Jack", "Rose", "Tom", "Jerry"],
+    intr() {
+        this.friends.forEach((ele) => {
+            console.log(this.sname + "认识" + ele);
+        });
+    }
+}
+Bob2.intr();//鲍勃认识Jack 鲍勃认识Rose 鲍勃认识Tom 鲍勃认识Jerry
+//例子5 普通函数作为回调函数会丢失this，this指向了window对象
+var Func = function () {
+    this.age = 12;
+    this.say = function () {
+        console.log("age=" + this.age);
+    };
+}
+var fo = new Func();
+fo.say()//age=12
+function callback(cal) {
+    cal()
+}
+callback(fo.say)//age=undefined
+//例子6，通过显式绑定使得this重新指向某个对象
+var Func = function () {
+    this.age = 12;
+    this.say = function () {
+        console.log("age=" + this.age);
+    };
+}
+var fo = new Func();
+
+function callback(cal) {
+    cal.call(this)
+}
+callback.call(fo, fo.say)//age=12
+//或者
+function callback(cal) {
+    cal.call(fo,fo.say)
+}
+callback(fo.say)//age=12
+//或者
+var Func = function () {
+    this.age = 12;
+    this.say = function () {
+        let a = () => {
+            console.log("age=" + this.age);
+        }
+        a()
+    };
+}
+var fo = new Func();
+function callback(cal) {
+    cal.call(fo, fo.say)
+}
+callback(fo.say)//age=12
 ```
 
 ## 39.eval函数
@@ -1450,8 +1553,8 @@ parseInt('3',2)
 > const person1 = {name: '林三心', age: 10}
 > // 第二种：new Object创建对象
 > const person2 = new Object()
-> person3.name = '林三心'
-> person3.age = 10
+> person2.name = '林三心'
+> person2.age = 10
 > console.log(person1.__proto__ === Object.prototype)//true
 > console.log(person2.__proto__ === Object.prototype)//true
 > 
@@ -1460,7 +1563,7 @@ parseInt('3',2)
 > person4.name = '林三心'
 > person4.age = 10
 > 
-> console.log(person3.__proto__ === Object.prototype)//false
+> console.log(person4.__proto__ === Object.prototype)//false
 > ```
 >
 > 对于`函数原型链`，该函数的自身的`__proto__`指向了`Function.prototype`，而`Function.prototype.__proto__`又指向了`Object.prototype`，该函数实例的`__proto__`指向了`F.prototype`。
@@ -1512,17 +1615,560 @@ console.log(Person instanceof Object) // true
 console.log(person instanceof Person) // true
 console.log(person instanceof Object) // true
 console.log(person instanceof Function) //false
+//手写instanceof函数
+// instanceof 运算符用于判断构造函数的 prototype 属性是否出现在对象的原型链中的任何位置。
+// 实现：
+function myInstanceof(left, right) {
+  let proto = Object.getPrototypeOf(left), // 获取对象的原型
+    prototype = right.prototype; // 获取构造函数的 prototype 对象
+
+  // 判断构造函数的 prototype 对象是否在对象的原型链上
+  while (true) {
+    if (!proto) return false;
+    if (proto === prototype) return true;
+
+    proto = Object.getPrototypeOf(proto);
+  }
+}
 ```
 
 
 
+## 46.前端模块化
+
+### 什么是模块？
+
+> 将一段有特定功能的程序根据一定的规范封装成为一个或者几个块（文件），模块内部有一些私有的变量或者方法，同时向外暴露了一些接口或者方法
+
+### js早期的模块化方法
+
+```javascript
+//1.通过函数实现模块化
+//问题：函数名本身就是全局的，容易和库函数产生冲突，
+function m1(){
+  //...
+}
+function m2(){
+  //...
+}
+//2.通过对象进行封装
+//问题：对象名仍然是全局的，而且数据不安全，从外部直接可以修改
+let myModule = {
+  data: 'www.baidu.com',
+  foo() {
+    console.log(`foo() ${this.data}`)
+  },
+  bar() {
+    console.log(`bar() ${this.data}`)
+  }
+}
+//3.IIFE（立即执行函数）模式
+//问题：无法处理模块之间的依赖关系
+// module.js文件
+(function(window) {
+  let data = 'www.baidu.com'
+  //操作数据的函数
+  function foo() {
+    //用于暴露有函数
+    console.log(`foo() ${data}`)
+  }
+  function bar() {
+    //用于暴露有函数
+    console.log(`bar() ${data}`)
+    otherFun() //内部调用
+  }
+  function otherFun() {
+    //内部私有的函数
+    console.log('otherFun()')
+  }
+})(window)
+//4.改进版的IIFE
+// module.js文件
+//这是模块化的基石，问题：引入多个scrpit文件后造成难以维护，不知道他们之间的依赖顺序
+(function (window, $) {
+    let data = 'www.baidu.com'
+
+    //操作数据的函数
+    function foo() {
+        //用于暴露有函数
+        console.log(`foo() ${data}`)
+        $('body').css('background', 'red')
+    }
+
+    function bar() {
+        //用于暴露有函数
+        console.log(`bar() ${data}`)
+        otherFun() //内部调用
+    }
+
+    function otherFun() {
+        //内部私有的函数
+        console.log('otherFun()')
+    }
+
+    //暴露行为
+    window.myModule = {foo, bar}
+})(window, jQuery)
+```
+
+### 模块化中期的三个发展
+
+1. `CommonJS`，通过Node环境实现功能
+
+```javascript
+//由NodeJS提出，每个文件就是一个模块，有自己的作用域，内部的对象和方法全部是私有的，对其他文件不可见，必须通过exports导出才可以使用
+//CommonJS特点
+//1.（model.exports导出）CommonJS规范规定，每个模块内部，module变量代表当前模块。这个变量是一个对象，它的exports属性（即module.exports）是对外的接口。加载某个模块，其实是加载该模块的module.exports属性。
+//2.（深拷贝导出）CommonJS模块的加载机制是，输入的是被输出的值的拷贝。也就是说，一旦输出一个值，模块内部的变化就影响不到这个值。这点与ES6模块化有重大差异
+//3.（同步加载）CommonJS规范加载模块是同步的，也就是说，只有加载完成，才能执行后面的操作
+// example.js
+var x = 5;
+var addX = function (value) {
+  return value + x;
+};
+module.exports.x = x;
+module.exports.addX = addX;
+//main.js
+var example = require('./example.js');//如果参数字符串以“./”开头，则表示加载的是一个位于相对路径
+console.log(example.x); // 5
+console.log(example.addX(1)); // 6
+```
+
+2. `AMD`，通过引入require.js来实现功能
+
+```javascript
+//早期提出主要是针对浏览器端，CommonJS规范加载模块是同步的，也就是说，只有加载完成，才能执行后面的操作。AMD规范则是非同步加载模块，允许指定回调函数。由于Node.js主要用于服务器编程，模块文件一般都已经存在于本地硬盘，所以加载起来比较快，不用考虑非同步加载的方式，所以CommonJS规范比较适用。但是，如果是浏览器环境，要从服务器端加载模块，这时就必须采用非同步模式，因此浏览器端一般采用AMD规范。
+//CMD特点
+//1.异步加载
+//2.通过define关键字可以暴露和引入模块，通过require关键字引入模块
+//CMD用法
+//定义没有依赖的模块
+define(function(){
+   return 模块
+})
+//定义有依赖的模块
+define(['module1', 'module2'], function(m1, m2){
+   return 模块
+})
+// 引入外部依赖
+require(['module1', 'module2'], function(m1, m2){
+   使用m1/m2
+})
+// 例子
+// dataService.js文件
+// 定义没有依赖的模块
+define(function() {
+  let msg = 'www.baidu.com'
+  function getMsg() {
+    return msg.toUpperCase()
+  }
+  return { getMsg } // 暴露模块
+})
+//alerter.js文件
+// 定义有依赖的模块
+define(['dataService'], function(dataService) {
+  let name = 'Tom'
+  function showMsg() {
+    alert(dataService.getMsg() + ', ' + name)
+  }
+  // 暴露模块
+  return { showMsg }
+})
+// main.js文件
+(function() {
+  require.config({
+    baseUrl: 'js/', //基本路径 出发点在根目录下
+    paths: {
+      //映射: 模块标识名: 路径
+      alerter: './modules/alerter', //此处不能写成alerter.js,会报错
+      dataService: './modules/dataService'
+    }
+  })
+  require(['alerter'], function(alerter) {
+    alerter.showMsg()
+  })
+})()
+```
+
+3. `CMD`，通过引入sea.js来实现
+
+```javascript
+//CMD规范专门用于浏览器端，模块的加载是异步的，模块使用时才会加载执行。CMD规范整合了CommonJS和AMD规范的特点。
+//使用规范
+//定义没有依赖的模块
+define(function(require, exports, module){
+  exports.xxx = value
+  module.exports = value
+})
+//定义有依赖的模块
+define(function(require, exports, module){
+  //引入依赖模块(同步)
+  var module2 = require('./module2')
+  //引入依赖模块(异步)
+    require.async('./module3', function (m3) {
+    })
+  //暴露模块
+  exports.xxx = value
+})
+//导入模块
+define(function (require) {
+  var m1 = require('./module1')
+  var m4 = require('./module4')
+  m1.show()
+  m4.show()
+})
+```
+
+### ES6的模块化
+
+```javascript
+
+//ES6模块化语法
+//通过export（注意不是exports）命令暴露接口，通过import命令导入其他模块
+/** 定义模块 math.js **/
+var basicNum = 0;
+var add = function (a, b) {
+    return a + b;
+};
+export { basicNum, add };
+/** 引用模块 **/
+import { basicNum, add } from './math';
+function test(ele) {
+    let res = add(99 + basicNum);
+}
+//在上述情况下，如果一个用户想导入某个模块中的方法或者对象，必须知道其名称，为了提供方便，ES6还提供了匿名暴露export default
+// export-default.js
+export default function () {
+  console.log('foo');
+}
+// import-default.js
+import customName from './export-default';
+customName(); // 'foo'
+//ES6模块化特点
+//1.CommonJS 模块输出的是一个值的拷贝，ES6 模块输出的是值的引用。
+//2.CommonJS 模块是运行时加载，ES6 模块是编译时输出接口。
+// ES6输出的是一个引用（浅拷贝）
+export let counter = 3;
+export function incCounter() {
+  counter++;
+}
+// main.js
+import { counter, incCounter } from './lib';
+console.log(counter); // 3
+incCounter();
+console.log(counter); // 4
+```
+
+## 47.`new`操作符的原理以及手动实现
+
+### `new`操作符具体干了什么？
+
+```javascript
+//从这个例子中，我们可以看到，实例 person 可以：
+//访问到 Otaku 构造函数里的属性
+//访问到 Otaku.prototype 中的属性
+function Otaku (name, age) {
+    this.name = name;
+    this.age = age;
+
+    this.habit = 'Games';
+}
+// 因为缺乏锻炼的缘故，身体强度让人担忧
+Otaku.prototype.strength = 60;
+Otaku.prototype.sayYourName = function () {
+    console.log('I am ' + this.name);
+}
+var person = new Otaku('Kevin', '18');
+console.log(person.name) // Kevin
+console.log(person.habit) // Games
+console.log(person.strength) // 60
+person.sayYourName(); // I am Kevin
+
+//初步实现
+// 第一版代码
+function objectFactory() {
+    let obj = new Object()//用new Object() 的方式新建了一个对象 obj
+    let Constructor = Array.protorype.shift.call(arguments)
+//这一行是为了取出arguments伪数组的第一个对象，但是arguments本身没有shift方法，而Array的原型对象（构造函数）有这个方法（但是没对象），因此需要使用call函数，让this指向了arguments，使得这两个毫不相关的对象和方法建立联系，具体解释见下面链接
+    obj.__proto__ = Constructor.prototype;//将 obj 的原型指向构造函数
+    Constructor.apply(obj, arguments);//使用 apply，改变构造函数 this 的指向到新建的对象，这样 obj 就可以访问到构造函数中的属性
+    return obj;
+};
+var person = objectFactory(Otaku, 'Kevin', '18')
+console.log(person.name) // Kevin
+console.log(person.habit) // Games
+console.log(person.strength) // 60
+person.sayYourName(); // I am Kevin
+
+//返回值效果实现
+//如果构造函数有返回值，返回值是一个对象或者基本类型值的情况又有不同
+function Otaku (name, age) {
+    this.strength = 60;
+    this.age = age;
+    return {
+        name: name,
+        habit: 'Games'
+    }//返回一个对象
+}
+var person = new Otaku('Kevin', '18');
+console.log(person.name) // Kevin
+console.log(person.habit) // Games
+console.log(person.strength) // undefined
+console.log(person.age) // undefined
+function Otaku (name, age) {
+    this.strength = 60;
+    this.age = age;
+
+    return 'handsome boy';//返回一个基本变量
+}
+var person = new Otaku('Kevin', '18');
+console.log(person.name) // undefined
+console.log(person.habit) // undefined
+console.log(person.strength) // 60
+console.log(person.age) // 18
+
+// 所以我们还需要判断返回的值是不是一个对象，如果是一个对象，我们就返回这个对象，如果没有，我们该返回什么就返回什么。 
+//第二版的代码
+function objectFactory() {
+    var obj = new Object(),
+    Constructor = [].shift.call(arguments);
+    obj.__proto__ = Constructor.prototype;
+    var ret = Constructor.apply(obj, arguments);
+    //如果构造函数返回的是一个对象，那么就直接返回此对象，否则返回我们自己构造的对象
+    return typeof ret === 'object' ? ret : obj;
+};
+```
+
+https://www.baidu.com/link?url=zALXzyhr50uSfGvhlHyTX69RpbPb1TI0jpgTDksQziWImoNEbW8WfGjLq9XKcXU2bXWzSJf46SNfaO92WjfOtTqM9jD16kg9DXT43c1obYK&wd=&eqid=f54ed40b001089ab00000004622994eb
+
+## 48.Javascript 中，有一个函数，执行对象查找时，永远不会去查找原型，这个函数是？
+
+> hasOwnProperty
+>
+> 所有继承了 Object 的对象都会继承到 hasOwnProperty 方法。这个方法可以用来检测一个对象是否含有特定的自身属性，和
+> in 运算符不同，该方法会忽略掉那些从原型链上继承到的属性。
+
+## 49.AJAX异步请求
+
+
+
+## 50.Promise Async/Await异步 
+
+
+
+## 51.浏览器缓存
+
+
+
+## 52.浏览器跨域
+
+> 什么是跨域？
+>
+> 跨域是指浏览器不能执行非`同源`的网站JS脚本,同源是指只要http请求的域名和端口有一个不同，都会被当做不同的域，被浏览器拦截掉.
+>
+> **跨域并不是请求发不出去，请求能发出去，服务端能收到请求并正常返回结果，只是结果被浏览器拦截了**。
+>
+> 解决方案？
+>
+> 1. `JSONP`
+>
+> **利用 `<script>` 标签没有跨域限制的漏洞，网页可以得到从其他来源动态产生的 JSON 数据。JSONP请求一定需要对方的服务器做支持才可以。**
+>
+> 缺点：JSONP 只支持 get，因为 script 标签只能使用 get 请求； JSONP 需要后端配合返回指定格式的数据。**不安全可能会遭受XSS攻击**
+>
+> ```javascript
+> //动态创建 script
+> var script = document.createElement('script');
+> // 设置回调函数
+> function getData(data) {
+>     console.log(data);
+> }
+> //设置 script 的 src 属性，并设置请求地址
+> script.src = 'http://localhost:3000/?callback=getData';
+> // 让 script 生效
+> document.body.appendChild(script);
+> ```
+>
+> 2. `CORS` Cross-origin resource sharing**CORS 需要浏览器和后端同时支持。**
+>
+> 浏览器会自动进行 CORS 通信，实现 CORS 通信的关键是后端。只要后端实现了 CORS，就实现了跨域。服务端设置 Access-Control-Allow-Origin 就可以开启 CORS。 该属性表示哪些域名可以访问资源，如果设置通配符则表示所有网站都可以访问资源。`CORS`会使得http请求分为两种**简单请求**和**复杂请求**。
+>
+> `简单请求`
+>
+> 只要同时满足以下两大条件，就属于简单请求，不符合以下条件之一就是复杂请求，杂请求的CORS请求，会在正式通信之前，增加一次HTTP查询请求，称为"预检"请求,该请求是 option 方法的，通过该请求来知道服务端是否允许跨域请求。
+>
+> 条件1：使用下列方法之一：
+>
+> - GET
+> - HEAD
+> - POST
+>
+> 条件2：Content-Type 的值仅限于下列三者之一：
+>
+> - text/plain
+> - multipart/form-data
+> - application/x-www-form-urlencoded
+>
+> 3. `Proxy`代理
+>
+> **同源策略是浏览器需要遵循的标准，而如果是服务器向服务器请求就无需遵循同源策略。** 代理服务器，需要做以下几个步骤：
+>
+> - 接受客户端请求 。
+> - 将请求 转发给服务器。
+> - 拿到服务器 响应 数据。
+> - 将 响应 转发给客户端
+>
+> ![img](https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/1/17/1685c5bed77e7788~tplv-t2oaga2asx-zoom-in-crop-mark:1304:0:0:0.awebp)
+>
+> 4. nginx反向代理
+>
+> 使用nginx反向代理实现跨域，是最简单的跨域方式。只需要修改nginx的配置即可解决跨域问题，支持所有浏览器，支持session，不需要修改任何代码，并且不会影响服务器性能。
+>
+> 实现思路：通过nginx配置一个代理服务器（域名与domain1相同，端口不同）做跳板机，反向代理访问domain2接口，并且可以顺便修改cookie中domain信息，方便当前域cookie写入，实现跨域登录。
+>
+> 5. `websocket`
+>
+> Websocket是HTML5的一个持久化的协议，它实现了浏览器与服务器的全双工通信，同时也是跨域的一种解决方案。WebSocket和HTTP都是应用层协议，都基于 TCP 协议。但是 **WebSocket 是一种双向通信协议，在建立连接之后，WebSocket 的 server 与 client 都能主动向对方发送或接收数据**。同时，WebSocket 在建立连接时需要借助 HTTP 协议，连接建立好了之后 client 与 server 之间的双向通信就与 HTTP 无关了。
+>
+> 总结：`JSONP`基本不用，常用的是`CORS`进行跨域，由后端解决跨域问题，特殊情况下使用3或者4
+>
+> 参考 https://juejin.cn/post/6844903767226351623#heading-15
+
+
+
+## 53.浏览器https/https协议,TCP/UDP协议
+
+> http协议中，用户从输入url按下回车会发生什么?
+>
+> 1. 浏览器首先会进行域名解析，查找对应的ip地址，查找的顺序如下浏览器缓存、系统缓存、路由缓存、dns服务器解析
+> 2. 浏览器与服务器三次握手，成功建立TCP连接
+> 3. 浏览器发出http请求
+> 4. 服务器收到请求，返回资源
+> 5. 浏览器收到数据后，进行解析、渲染
+> 6. 显示页面
+>
+> https和http的区别以及优缺点
+>
+> * http是超文本传输协议，信息明文传输，https协议比http协议安全，使用ssl加密传输，可以防止传输过程中数据被窃取改变。
+> * http协议默认80端口，https协议默认端口是443
+> * https在握手阶段比较费时，降低页面加载速度
+> * https的缓存不如http高效，增加内存开销
+> * https需要ca证书，越强大的证书功能费用越高
+> * SSL证书需要绑定ip，不能在同一个ip上绑定多个域名
+>
+> https协议的工作过程
+>
+> 1. 客户端使用https url访问服务器，请求与服务器建立ssl连接
+> 2. web服务器收到了请求后，将网站的证书(包含了公钥)，传输给客户端
+> 3. 客户端与web服务器协商ssl的安全等级
+> 4. 客户端与web服务器建立会话秘钥，通过网站的公钥来加密会话秘钥，并传送给网站
+> 5. web服务器通过自己的私钥解密出会话秘钥
+> 6. web服务器通过会话秘钥加密与客户端之间的通信
+>
+> TCP三次握手与四次挥手
+>
+> `三次握手`
+>
+> 1. 第一次握手：客户端发送`syn(syn=j)`包到服务器，并进入`syn_sent`状态，等待服务器确认；`SYN同步序列编号`
+> 2. 第二次握手：服务器收到`syn`包并确认客户的`SYN(ack=j+1)`，同时发送一个自己的`SYN+ACK`包，此时的服务器进入`syn_recv`状态
+> 3. 第三次握手：客户端收到服务器的`SYN+ACK`包，向服务器发送确认包`ACK(ack=k+1)`，此包发送结束，客户端和服务器端进入ESTABLISHED状态(TCP连接成功)，完成三次握手
+>
+> 握手的过程不包含数据，三次握手结束后才正式开始传送数据
+>
+> `四次挥手`
+>
+> 1. 客户端进程发出连接释放报文，并且停止发送数据，释放报文首部，FIN=1，其序列号seq=u，等于前面已经传送过来的数据的最后一个字节的序号加1，此时，客户端进入`FIN-WAIT-1终止等1`状态。FIN报文不携带数据，也不消耗序列号
+> 2. 服务器收到`释放报文`，发出`确认报文ACK`，此时服务端就进入了`CLOSE-WAIT`状态，此时服务器端的应用程序关闭了接收数据，但是仍然可以向客户端发送数据，处于半关闭状态
+> 3. 客户端收到了服务器的确认报文`ACK`后客户端就进入了`FIN-WAIT2终止等待2`状态，等待服务器发送最后的`释放报文`，这是因为服务器端可能还有一些数据需要发送
+> 4. 服务器将最后的数据发送完毕后就向客户端发送`释放报文`，发送完成后进入`LAST-ACK最后确认`状态
+> 5. 客户端接收到`释放报文`，向服务器端发送确认报文，此时客户端进入了`TIME-WAIT`状态，经过2倍的最长报文寿命后，进入`close状态`
+> 6. 服务器端收到了确认报文后立即进入`close状态`，因此服务器结束的时间要早一些
+>
+> 注意 3 4并不是顺序的，两者的顺序不固定
+>
+> ![å¨è¿éæå¥å¾çæè¿°](E:\work\notebook\20210331144909805.png)
+>
+> 为什么不能采用两次握手？采用三次握手是为了什么？
+>
+> 假设客户端为主机A，服务器端为主机B，采用三次握手是为了重复的历史请求造成资源浪费。考虑这样一种情况，如果主机A向主机B发送了一个连接请求，由于网络拥堵，主机B在一定时间内没有收到，因此不会发送确认，主机A没有收到确认报文也就不会建立连接，经过了一段时间后，主机B收到了连接请求，并一直监听数据，但是主机A并没有与主机B建立连接，使得主机B一直处于无效监听状态。
+>
+> TCP如何保证可靠传输？
+>
+> 1. 校验和用来判断数据是否出错或者被篡改，在发送方将伪首部（最前面的96位，12字节）分为6个16位的段，然后将所有段进行反码相加，将结果存放在检验和字段中，接收方用相同的方法进行计算，如最终结果为检验字段所有位是全1则正确
+> 2. 应答与序列号用来保证数据的顺序性以及去除重复数据，
+>
+> ![img](E:\work\notebook\5021195-b76ffe9749f8c95b.png)
+>
+> 3. 超时重传，当报文发出后在一定的时间内未收到接收方的确认，发送方就会进行重传，重传时间的确定：报文段发出到收到应答中间有一个报文段的往返时间RTT，显然超时重传时间RTO会略大于这个RTT，TCP会根据网络情况动态的计算RTT
+>
+> 4. 流量控制，流量控制解决了两台主机之间因传送速率而可能引起的丢包问题。接收端处理数据的速度是有限的，如果发送方发送数据的速度过快，导致接收端的缓冲区满，而发送方继续发送，就会造成丢包，继而引起丢包重传等一系列连锁反应。
+>     因此TCP支持根据接收端的处理能力，来决定发送端的发送速度，这个机制叫做流量控制。
+>     在TCP报文段首部中有一个16位窗口长度，当接收端接收到发送方的数据后，在应答报文ACK中就将自身缓冲区的剩余大小，放入16窗口大小中。这个大小随数据传输情况而变，窗口越大，网络吞吐量越高，而一旦接收方发现自身的缓冲区快满了，就将窗口设置为更小的值通知发送方。如果缓冲区满，就将窗口置为0，发送方收到后就不再发送数据，但是需要定期发送一个窗口探测数据段，使接收端把窗口大小告诉发送端。
+>
+>    流量控制解决的只是过快的发送方的问题，拥塞控制用来解决网络拥堵的问题。
+>
+> 5. 拥塞控制-慢启动，拥塞避免，快重传，快恢复，快重传算法首先要求接收方每收到一个失序的报文段后就立即发出重复确认（为的是使发送方及早知道有报文段没有到达对方）而不要等到自己发送数据时才进行捎带确认。快速重传和快速恢复算法一般同时使用
+>
+> 参考 https://www.jianshu.com/p/42dbcd39c3e7
+>
+> 
+>
+> ![img](E:\work\notebook\5021195-991a69df2dbf5ff7.png)
+>
+> TCP/UDP区别
+>
+> 1. TCP的三次握手保证了连接的`可靠性`，TCP是有连接的，UDP是无连接的、不可靠的一种数据传输协议，首先不可靠性体现在无连接上，通信都不需要建立连接，对接收到的数据也不发送确认信号，发送端不知道数据是否会正确接收。
+>
+> 2. TCP仅支持`单播传输`，UDP 提供了单播，多播，广播的功能。
+>
+> 3. UDP的`头部开销`比TCP的更小，数据`传输速率更高`，`实时性更好`。
+
+# 54.浏览器解析渲染过程
+
+> 1. 解析html，生成dom树
+> 2. 解析css，生成cssom树
+> 3. 合并dom、cssom，生成渲染树
+> 4. 计算渲染树的布局Layout，将布局Paint渲染到屏幕上
+>
+> 重绘重排
+>
+> 
 
 
 
 
 
 
-## 写一个JS通用的事件监听函数
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## 
 
 
 
