@@ -445,5 +445,79 @@ flex布局的三个应用
 > p {width: 15.625rem}
 > ```
 >
-> 
 
+
+
+# 浮动布局float
+
+> ## 为什么需要使用浮动？
+>
+> 使用标准流很难将多个块级元素在一行内进行排列，标准流一般默认从上到下排列块级元素。例如我们有如下的两个任务，标准流很难轻松做到
+>
+> - 如何让多个块级盒子水平排列成一行
+> - 如何实现一个盒子中的两个盒子分别左右对齐
+>
+> 因此早期的时候提出了浮动来在使得多个块级元素横向排列。
+>
+> ## 浮动的用法或者特性？
+>
+> 浮动的语法很简单，只有一个属性，三个选择
+>
+> ```css
+> float: right, left, none
+> ```
+>
+> 如果某个块级元素被设置了浮动，那么该元素会脱离标准流，多个浮动元素会默认首先在一行进行排列，而且顶端对齐，如果宽度超出了一行的宽度，会自动换到下一行，可以通过设置margin-left使得重新回到上一行(margin设置百分比基于父容器的宽度)
+>
+> ```html
+> <div calss="up" style="background-color: #E6CEAC">
+>     1243
+> </div>
+> <div class="left" style"float:left"></div>
+> <div class="right">
+>     123
+> </div>
+> 脱离标准流是指把left元素从标准流中移除,right元素紧跟着up元素排列，right元素不会受到left元素的影响
+> ```
+>
+> ![image-20220510143531008](E:\work\notebook\image-20220510143531008.png)
+>
+> 如果某个元素设置成为了浮动，那么父元素的高度不会被该子元素自动撑开，所以我们需要通过一些方式，使得父元素高度仍然能够被浮动的子元素自动撑开，俗称`清除浮动`
+>
+> ```html
+> <style>
+>     .left {
+>         background-color: red;
+>         height: 100px;
+>         float: left;
+>         width: 100px;
+>     }
+> 
+>     .right {
+>         background-color: green;
+>     }
+> </style>
+> <div class="parent">
+>     <div class="left"></div>
+>     <div class="right">
+>         123
+>     </div>
+> </div>
+> parent元素的高度只会受到right元素的影响，不会受到left元素的影响，通过在父元素上加入overflow: hidden;可以清除浮动元素，也可以通过伪元素或者在末尾加入一个块元素，并结合clear:both也可以清除浮动
+> ```
+>
+> ​	清除浮动之前
+>
+> ![image-20220510143950554](E:\work\notebook\image-20220510143950554.png)
+>
+> 清除浮动之后
+>
+> ![image-20220510144022628](E:\work\notebook\image-20220510144022628.png)
+
+## 相对布局 relative
+
+> 为什么要使用相对布局？
+>
+> 使用相对布局可以调整div元素的位置，通过left,right,top,bottom可以设置元素的位置，并且该元素不会脱离文档流
+>
+> 
